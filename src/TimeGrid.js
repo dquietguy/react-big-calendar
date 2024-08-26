@@ -139,45 +139,62 @@ export default class TimeGrid extends Component {
     const groupedEvents = resources.groupEvents(events)
     const groupedBackgroundEvents = resources.groupEvents(backgroundEvents)
 
-    return range.map((date, jj) =>
-      resources.map(([id, resource], i) => {
-        let daysEvents = (groupedEvents.get(id) || []).filter((event) =>
-          localizer.inRange(
-            date,
-            accessors.start(event),
-            accessors.end(event),
-            'day'
-          )
-        )
+    return range.map(
+      (date, jj) => (
+        <DayColumn
+          {...this.props}
+          localizer={localizer}
+          min={localizer.merge(date, min)}
+          max={localizer.merge(date, max)}
+          resources={resources}
+          components={components}
+          isNow={localizer.isSameDate(date, now)}
+          key={`${jj}`}
+          date={date}
+          events={groupedEvents}
+          backgroundEvents={groupedBackgroundEvents}
+          dayLayoutAlgorithm={dayLayoutAlgorithm}
+        />
+      )
 
-        let daysBackgroundEvents = (
-          groupedBackgroundEvents.get(id) || []
-        ).filter((event) =>
-          localizer.inRange(
-            date,
-            accessors.start(event),
-            accessors.end(event),
-            'day'
-          )
-        )
+      // resources.map(([id, resource], i) => {
+      //   let daysEvents = (groupedEvents.get(id) || []).filter((event) =>
+      //     localizer.inRange(
+      //       date,
+      //       accessors.start(event),
+      //       accessors.end(event),
+      //       'day'
+      //     )
+      //   )
 
-        return (
-          <DayColumn
-            {...this.props}
-            localizer={localizer}
-            min={localizer.merge(date, min)}
-            max={localizer.merge(date, max)}
-            resource={resource && id}
-            components={components}
-            isNow={localizer.isSameDate(date, now)}
-            key={`${jj}-${i}`}
-            date={date}
-            events={daysEvents}
-            backgroundEvents={daysBackgroundEvents}
-            dayLayoutAlgorithm={dayLayoutAlgorithm}
-          />
-        )
-      })
+      //   let daysBackgroundEvents = (
+      //     groupedBackgroundEvents.get(id) || []
+      //   ).filter((event) =>
+      //     localizer.inRange(
+      //       date,
+      //       accessors.start(event),
+      //       accessors.end(event),
+      //       'day'
+      //     )
+      //   )
+
+      //   return (
+      //     <DayColumn
+      //       {...this.props}
+      //       localizer={localizer}
+      //       min={localizer.merge(date, min)}
+      //       max={localizer.merge(date, max)}
+      //       resource={resource && id}
+      //       components={components}
+      //       isNow={localizer.isSameDate(date, now)}
+      //       key={`${jj}-${i}`}
+      //       date={date}
+      //       events={daysEvents}
+      //       backgroundEvents={daysBackgroundEvents}
+      //       dayLayoutAlgorithm={dayLayoutAlgorithm}
+      //     />
+      //   )
+      // })
     )
   }
 

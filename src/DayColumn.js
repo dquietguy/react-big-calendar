@@ -106,11 +106,14 @@ class DayColumn extends React.Component {
       max,
       rtl,
       isNow,
-      resource,
+      resources,
       accessors,
       localizer,
       getters: { dayProp, ...getters },
       components: { eventContainerWrapper: EventContainer, ...components },
+      events,
+      backgroundEvents,
+      key,
     } = this.props
 
     this.slotMetrics = this.slotMetrics.update(this.props)
@@ -126,59 +129,87 @@ class DayColumn extends React.Component {
       components.dayColumnWrapper || DayColumnWrapper
 
     return (
-      <DayColumnWrapperComponent
-        ref={this.containerRef}
-        date={date}
-        style={style}
-        className={clsx(
-          className,
-          'rbc-day-slot',
-          'rbc-time-column',
-          isNow && 'rbc-now',
-          isNow && 'rbc-today', // WHY
-          selecting && 'rbc-slot-selecting'
-        )}
-        slotMetrics={slotMetrics}
-        resource={resource}
-      >
-        {slotMetrics.groups.map((grp, idx) => (
-          <TimeSlotGroup
-            key={idx}
-            group={grp}
-            resource={resource}
-            getters={getters}
-            components={components}
-          />
-        ))}
-        <EventContainer
-          localizer={localizer}
-          resource={resource}
-          accessors={accessors}
-          getters={getters}
-          components={components}
-          slotMetrics={slotMetrics}
-        >
-          <div className={clsx('rbc-events-container', rtl && 'rtl')}>
-            {this.renderEvents({
-              events: this.props.backgroundEvents,
-              isBackgroundEvent: true,
-            })}
-            {this.renderEvents({ events: this.props.events })}
-          </div>
-        </EventContainer>
+      <>
+        {resources.map(([id, resource], i) => {
+          let daysEvents = (events.get(id) || []).filter((event) =>
+            localizer.inRange(
+              date,
+              accessors.start(event),
+              accessors.end(event),
+              'day'
+            )
+          )
 
-        {selecting && (
-          <div className="rbc-slot-selection" style={{ top, height }}>
-            <span>{localizer.format(selectDates, 'selectRangeFormat')}</span>
-          </div>
-        )}
-        {isNow && this.intervalTriggered && (
-          <div
-            className="rbc-current-time-indicator"
-            style={{ top: `${this.state.timeIndicatorPosition}%` }}
-          />
-        )}
-      </DayColumnWrapperComponent>
+          let daysBackgroundEvents = (backgroundEvents.get(id) || []).filter(
+            (event) =>
+              localizer.inRange(
+                date,
+                accessors.start(event),
+                accessors.end(event),
+                'day'
+              )
+          )
+          return (
+            <DayColumnWrapperComponent
+              key={`${id}-${key}`}
+              ref={this.containerRef}
+              date={date}
+              style={style}
+              className={clsx(
+                className,
+                'rbc-day-slot',
+                'rbc-time-column',
+                isNow && 'rbc-now',
+                isNow && 'rbc-today', // WHY
+                selecting && 'rbc-slot-selecting'
+              )}
+              slotMetrics={slotMetrics}
+              resource={resource}
+            >
+              <p>{i}</p>
+              {slotMetrics.groups.map((grp, idx) => (
+                <TimeSlotGroup
+                  key={idx}
+                  group={grp}
+                  resource={resource}
+                  getters={getters}
+                  components={components}
+                />
+              ))}
+              <EventContainer
+                localizer={localizer}
+                resource={resource}
+                accessors={accessors}
+                getters={getters}
+                components={components}
+                slotMetrics={slotMetrics}
+              >
+                <div className={clsx('rbc-events-container', rtl && 'rtl')}>
+                  {this.renderEvents({
+                    events: daysBackgroundEvents,
+                    isBackgroundEvent: true,
+                  })}
+                  {this.renderEvents({ events: daysEvents })}
+                </div>
+              </EventContainer>
+
+              {selecting && (
+                <div className="rbc-slot-selection" style={{ top, height }}>
+                  <span>
+                    {localizer.format(selectDates, 'selectRangeFormat')}
+                  </span>
+                </div>
+              )}
+              {isNow && this.intervalTriggered && (
+                <div
+                  className="rbc-current-time-indicator"
+                  style={{ top: `${this.state.timeIndicatorPosition}%` }}
+                />
+              )}
+            </DayColumnWrapperComponent>
+          )
+        })}
+      </>
     )
   }
 
@@ -404,8 +435,8 @@ class DayColumn extends React.Component {
 }
 
 DayColumn.propTypes = {
-  events: PropTypes.array.isRequired,
-  backgroundEvents: PropTypes.array.isRequired,
+  events: PropTypes.any.isRequired,
+  backgroundEvents: PropTypes.any.isRequired,
   step: PropTypes.number.isRequired,
   date: PropTypes.instanceOf(Date).isRequired,
   min: PropTypes.instanceOf(Date).isRequired,
@@ -438,7 +469,7 @@ DayColumn.propTypes = {
 
   className: PropTypes.string,
   dragThroughEvents: PropTypes.bool,
-  resource: PropTypes.any,
+  resources: PropTypes.any,
 
   dayLayoutAlgorithm: DayLayoutAlgorithmPropType,
 }
