@@ -1,3 +1,5 @@
+# This workflow is triggered by a release being created.
+# It builds the package and publishes it to the npm registry.
 on:
   release:
     types: [created]
