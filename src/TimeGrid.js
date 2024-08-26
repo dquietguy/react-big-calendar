@@ -136,49 +136,47 @@ export default class TimeGrid extends Component {
       this.props
 
     const resources = this.memoizedResources(this.props.resources, accessors)
-    const groupedEvents = resources.groupEvents(events)
-    const groupedBackgroundEvents = resources.groupEvents(backgroundEvents)
 
-    return resources.map(([id, resource], i) =>
-      range.map((date, jj) => {
-        let daysEvents = (groupedEvents.get(id) || []).filter((event) =>
-          localizer.inRange(
-            date,
-            accessors.start(event),
-            accessors.end(event),
-            'day'
-          )
-        )
+    // Filter events that don't belong to any resources
+    const filteredEvents = events.filter((event) => {
+      const eventResource = accessors.resource(event)
+      return (
+        !resources.length ||
+        (eventResource && resources.some(([id]) => id === eventResource))
+      )
+    })
 
-        let daysBackgroundEvents = (
-          groupedBackgroundEvents.get(id) || []
-        ).filter((event) =>
-          localizer.inRange(
-            date,
-            accessors.start(event),
-            accessors.end(event),
-            'day'
-          )
-        )
-
-        return (
-          <DayColumn
-            {...this.props}
-            localizer={localizer}
-            min={localizer.merge(date, min)}
-            max={localizer.merge(date, max)}
-            resource={resource && id}
-            components={components}
-            isNow={localizer.isSameDate(date, now)}
-            key={i + '-' + jj}
-            date={date}
-            events={daysEvents}
-            backgroundEvents={daysBackgroundEvents}
-            dayLayoutAlgorithm={dayLayoutAlgorithm}
-          />
-        )
-      })
+    const filteredBackgroundEvents = backgroundEvents.filter((event) => {
+      const eventResource = accessors.resource(event)
+      return (
+        !resources.length ||
+        (eventResource && resources.some(([id]) => id === eventResource))
+      )
+    })
+    console.log('Filtered Events:', filteredEvents)
+    console.log('Filtered Background Events:', filteredBackgroundEvents)
+    console.log(
+      'Resources:',
+      resources.map(([id, resource]) => ({ id, resource }))
     )
+
+    return range.map((date, jj) => (
+      <DayColumn
+        {...this.props}
+        localizer={localizer}
+        min={localizer.merge(date, min)}
+        max={localizer.merge(date, max)}
+        resource={null}
+        components={components}
+        isNow={localizer.isSameDate(date, now)}
+        key={jj}
+        date={date}
+        events={filteredEvents}
+        backgroundEvents={filteredBackgroundEvents}
+        dayLayoutAlgorithm={dayLayoutAlgorithm}
+        resources={resources}
+      />
+    ))
   }
 
   render() {
@@ -470,6 +468,11 @@ TimeGrid.propTypes = {
       y: PropTypes.number,
     }),
   ]),
+}
+
+TimeGrid.defaultProps = {
+  step: 30,
+  timeslots: 2,
 }
 
 TimeGrid.defaultProps = {

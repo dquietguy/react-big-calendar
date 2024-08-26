@@ -13,6 +13,7 @@ import TimeGridEvent from './TimeGridEvent'
 import { DayLayoutAlgorithmPropType } from './utils/propTypes'
 
 import DayColumnWrapper from './DayColumnWrapper'
+import Resources from './utils/Resources'
 
 class DayColumn extends React.Component {
   state = { selecting: false, timeIndicatorPosition: null }
@@ -111,6 +112,7 @@ class DayColumn extends React.Component {
       localizer,
       getters: { dayProp, ...getters },
       components: { eventContainerWrapper: EventContainer, ...components },
+      resources,
     } = this.props
 
     this.slotMetrics = this.slotMetrics.update(this.props)
@@ -125,6 +127,8 @@ class DayColumn extends React.Component {
     const DayColumnWrapperComponent =
       components.dayColumnWrapper || DayColumnWrapper
 
+    const resourceItems = Resources(resources, accessors)
+
     return (
       <DayColumnWrapperComponent
         ref={this.containerRef}
@@ -135,11 +139,10 @@ class DayColumn extends React.Component {
           'rbc-day-slot',
           'rbc-time-column',
           isNow && 'rbc-now',
-          isNow && 'rbc-today', // WHY
+          isNow && 'rbc-today',
           selecting && 'rbc-slot-selecting'
         )}
         slotMetrics={slotMetrics}
-        resource={resource}
       >
         {slotMetrics.groups.map((grp, idx) => (
           <TimeSlotGroup
@@ -150,23 +153,26 @@ class DayColumn extends React.Component {
             components={components}
           />
         ))}
-        <EventContainer
-          localizer={localizer}
-          resource={resource}
-          accessors={accessors}
-          getters={getters}
-          components={components}
-          slotMetrics={slotMetrics}
-        >
-          <div className={clsx('rbc-events-container', rtl && 'rtl')}>
-            {this.renderEvents({
-              events: this.props.backgroundEvents,
-              isBackgroundEvent: true,
-            })}
-            {this.renderEvents({ events: this.props.events })}
-          </div>
-        </EventContainer>
-
+        {resourceItems.map(([id, resourceObj], idx) => (
+          <EventContainer
+            key={id || idx}
+            localizer={localizer}
+            resource={resourceObj}
+            accessors={accessors}
+            getters={getters}
+            components={components}
+            slotMetrics={slotMetrics}
+          >
+            <div className={clsx('rbc-events-container', rtl && 'rtl')}>
+              {this.renderEvents({
+                events: this.props.backgroundEvents,
+                isBackgroundEvent: true,
+                resource: id,
+              })}
+              {this.renderEvents({ events: this.props.events, resource: id })}
+            </div>
+          </EventContainer>
+        ))}
         {selecting && (
           <div className="rbc-slot-selection" style={{ top, height }}>
             <span>{localizer.format(selectDates, 'selectRangeFormat')}</span>
@@ -182,7 +188,7 @@ class DayColumn extends React.Component {
     )
   }
 
-  renderEvents = ({ events, isBackgroundEvent }) => {
+  renderEvents = ({ events, isBackgroundEvent, resource }) => {
     let {
       rtl,
       selected,
@@ -199,8 +205,15 @@ class DayColumn extends React.Component {
     const { slotMetrics } = this
     const { messages } = localizer
 
+    let filteredEvents = events
+    if (resource) {
+      filteredEvents = events.filter(
+        (event) => accessors.resource(event) === resource
+      )
+    }
+
     let styledEvents = DayEventLayout.getStyledEvents({
-      events,
+      events: filteredEvents,
       accessors,
       slotMetrics,
       minimumStartDifference: Math.ceil((step * timeslots) / 2),
@@ -227,6 +240,7 @@ class DayColumn extends React.Component {
 
       return (
         <TimeGridEvent
+          className="test"
           style={style}
           event={event}
           label={label}
@@ -441,6 +455,7 @@ DayColumn.propTypes = {
   resource: PropTypes.any,
 
   dayLayoutAlgorithm: DayLayoutAlgorithmPropType,
+  resources: PropTypes.array,
 }
 
 DayColumn.defaultProps = {

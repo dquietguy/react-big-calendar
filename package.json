@@ -34,15 +34,15 @@
     "full calendar"
   ],
   "scripts": {
-    "build": "zx .scripts/build.mjs",
+    "build": "cross-env NODE_ENV=production zx .scripts/build.mjs",
     "build-storybook": "build-storybook",
-    "lint": "NODE_ENV=development eslint src test",
+    "lint": "cross-env NODE_ENV=development eslint src test",
     "prepare": "is-ci || husky install",
     "prepublishOnly": "yarn build",
     "prettier": "prettier '**/*js' '!lib/**' --write ",
     "storybook": "start-storybook -p 9002",
-    "test": "yarn lint && NODE_ENV=test jest",
-    "tdd": "NODE_ENV=test jest --watch"
+    "test": "yarn lint && cross-env NODE_ENV=test jest",
+    "tdd": "cross-env NODE_ENV=test jest --watch"
   },
   "peerDependencies": {
     "react": "^16.14.0 || ^17 || ^18",
@@ -81,6 +81,7 @@
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
     "babel-plugin-transform-rename-import": "^2.3.0",
     "babel-preset-react-app": "^10.0.1",
+    "cross-env": "^7.0.3",
     "eslint": "^8.31.0",
     "eslint-config-jason": "^8.2.2",
     "eslint-config-prettier": "^8.6.0",
